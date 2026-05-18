@@ -1,0 +1,17 @@
+---
+layout: default
+---
+<article class="container post-content">
+  <header class="post-header">
+    <h1 class="post-title">{{ page.title }}</h1>
+    <div class="post-meta">
+      <span><i class="far fa-calendar-alt"></i> {{ page.date | date: "%Y-%m-%d" }}</span>
+      {% if page.categories %}
+      <span><i class="far fa-folder"></i> {{ page.categories | join: ", " }}</span>
+      {% endif %}
+    </div>
+  </header>
+  <div class="post-body markdown-body">
+    {{ content }}
+  </div>
+</article>

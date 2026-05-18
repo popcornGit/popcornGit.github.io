@@ -1,54 +1,148 @@
 ---
-title: "欢迎来到我的博客"
-date: 2025-12-29
+layout: home
 ---
 
-# 你好，世界
+<!-- Hero Section -->
+<section class="hero">
+  <img src="https://avatars.githubusercontent.com/u/{{ site.github_username }}" alt="avatar" class="hero-avatar" onerror="this.style.display='none'">
+  <h1>LBK</h1>
+  <p class="subtitle">AI 视觉算法工程师 · NPU 模型转换</p>
+  <p class="tagline">
+    专注嵌入式 AI 视觉算法研发与 NPU 模型部署优化。<br>
+    工作涉及 AI 视觉核心库 (algcore) 架构、多品牌 NPU 模型转换、
+    C++/Python 开发与 ARM 平台交叉编译。
+  </p>
 
-这是我用 GitHub Pages 写的第一篇博客。你可以直接在这里写 Markdown，GitHub 会自动渲染。
-``` ````
+  <div class="hero-badges">
+    <span class="badge"><i class="fas fa-microchip"></i> NPU 部署</span>
+    <span class="badge"><i class="fas fa-eye"></i> 计算机视觉</span>
+    <span class="badge"><i class="fas fa-code"></i> C++ / Python</span>
+    <span class="badge"><i class="fas fa-robot"></i> AI Agent</span>
+  </div>
 
-可选：如果想启用 Jekyll 主题或做简单配置，添加一个 _config.yml（可选）：
+  <div class="hero-links">
+    <a href="{{ '/about' | relative_url }}" class="btn btn-primary">
+      <i class="fas fa-user"></i> 关于我
+    </a>
+    <a href="{{ '/projects' | relative_url }}" class="btn btn-outline">
+      <i class="fas fa-code"></i> 项目
+    </a>
+    <a href="https://github.com/{{ site.github_username }}" target="_blank" rel="noopener" class="btn btn-outline">
+      <i class="fab fa-github"></i> GitHub
+    </a>
+  </div>
+</section>
 
-```name=_config.yml
-title: "我的 GitHub Pages 站点"
-theme: minima
-```
+<!-- Stats Section -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-number">25+</div>
+        <div class="stat-label">GitHub 仓库</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">3+</div>
+        <div class="stat-label">NPU 平台</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number">3</div>
+        <div class="stat-label">关注者</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-可选：如果使用自定义域，在仓库根加一个 CNAME 文件，内容为你的域名（例如 example.com）：
+<!-- Featured Projects -->
+<section class="section">
+  <div class="container">
+    <h2 class="section-title">精选项目</h2>
+    <div class="project-grid">
+      <a href="https://github.com/popcornGit/" target="_blank" rel="noopener" class="project-card">
+        <div class="project-icon"><i class="fas fa-brain"></i></div>
+        <h3>algcore · AI 视觉核心库</h3>
+        <p>面向 AX650N 平台的 AI 视觉推理核心库。集成目标检测、人脸识别、TTS 语音合成等模块，支持多模型流水线调度。</p>
+        <div class="project-tech">
+          <span>C++</span>
+          <span>AX650N</span>
+          <span>Kokoro TTS</span>
+          <span>ARM64</span>
+        </div>
+      </a>
 
-```name=CNAME
-www.example.com
-```
+      <a href="https://github.com/popcornGit/" target="_blank" rel="noopener" class="project-card">
+        <div class="project-icon"><i class="fas fa-microchip"></i></div>
+        <h3>NPU 模型转换实战</h3>
+        <p>从 PyTorch → ONNX → 各品牌 NPU 格式的完整转换流程。涵盖瑞芯微 RKNN、爱芯元智 AXModel、地平线等平台。</p>
+        <div class="project-tech">
+          <span>RKNN</span>
+          <span>Pulsar2</span>
+          <span>ONNX</span>
+          <span>YOLO11s</span>
+        </div>
+      </a>
 
-三、通过网页操作直接新建文件（不用本地 git）
-1. 进入仓库首页，点击 “Add file” -> “Create new file”  
-2. 在文件名处输入 `index.md`，把上面内容粘贴进去，Commit changes（默认在 main 分支）  
-3. 等几分钟访问 https://popcornGit.github.io
+      <a href="https://github.com/popcornGit/LBK-Intelligent-dialogue" target="_blank" rel="noopener" class="project-card">
+        <div class="project-icon"><i class="fas fa-comments"></i></div>
+        <h3>智能对话系统</h3>
+        <p>基于深度学习的智能对话交互系统，融合自然语言理解与多轮对话管理。</p>
+        <div class="project-tech">
+          <span>Python</span>
+          <span>NLP</span>
+          <span>Deep Learning</span>
+        </div>
+      </a>
 
-四、通过命令行（推荐给经常本地开发的人）
-在本地做：
-- git init
-- git add index.md _config.yml (如果有)
-- git commit -m "初始 Pages"
-- git branch -M main
-- git remote add origin git@github.com:popcornGit/popcornGit.github.io.git
-- git push -u origin main
+      <a href="https://github.com/popcornGit/LBK-Bert-Text-Classification" target="_blank" rel="noopener" class="project-card">
+        <div class="project-icon"><i class="fas fa-tags"></i></div>
+        <h3>BERT 文本分类</h3>
+        <p>基于 BERT 模型的文本分类实践，涵盖情感分析、意图识别等场景。</p>
+        <div class="project-tech">
+          <span>BERT</span>
+          <span>PyTorch</span>
+          <span>NLP</span>
+        </div>
+      </a>
+    </div>
+    <div class="view-all">
+      <a href="{{ '/projects' | relative_url }}" class="btn btn-outline">
+        <i class="fas fa-arrow-right"></i> 查看全部项目
+      </a>
+    </div>
+  </div>
+</section>
 
-五、在 Settings 中检查 / 启用 Pages（通常不必手动）
-- 进入仓库 Settings -> Pages（或在新版 Settings -> Pages）  
-- 对于个人仓库 popcornGit.github.io，默认会部署 root（main branch / root）并自动启用。若用项目站点，请选择 branch（例如 main）和 folder（/root 或 /docs）。  
-- 如果你使用自定义域，填入域名并启用 Enforce HTTPS（GitHub 会尝试为自定义域申请证书，需正确设置 DNS）。
-
-六、Jekyll、主题与文章（可选进阶）
-- GitHub Pages 原生支持 Jekyll。如果你想写博客文章并使用 Jekyll 布局，可：
-  - 在仓库根创建 _posts 目录，文件命名格式：YYYY-MM-DD-title.md，文件开头要有 front-matter（YAML）。
-  - 使用主题：在 _config.yml 指定 theme（如 minima），或使用 GitHub Pages 主题选择器（Settings -> Pages -> Theme Chooser）。
-- 如果需要更复杂的静态站（Hugo/Hexo/Next.js），建议本地构建后把静态文件推到 gh-pages 分支或使用 GitHub Actions 自动构建部署（这是进阶，不在“直接用 Pages”的最简流程里）。
-
-七、常见问题与小提示
-- 刷新/生效时间：提交后一般几分钟生效，有时 <10 min。
-- 如果访问 404：确认仓库名是否为 username.github.io（个人站点）或 Pages 设置选择了正确分支/目录。
-- 禁用 Jekyll（如果你不想让 GitHub 尝试使用 Jekyll 构建）：在仓库根放空文件 .nojekyll。
-- 评论可以用 Giscus（基于 GitHub Issues）、Utterances 等，搜索并按说明配置。
-- 想要我帮你把这些文件直接生成好（index.md、_config.yml、CNAME）或者生成一个基本的 _posts 示例，我可以把文件内容发给你，或指导你用命令行一步推上去。你想现在我帮你生成哪些文件？
+<!-- Recent Blog Posts -->
+<section class="section section-alt">
+  <div class="container">
+    <h2 class="section-title">最新文章</h2>
+    <div class="blog-list">
+      {% for post in site.posts limit:3 %}
+      <a href="{{ post.url | relative_url }}" class="blog-card">
+        <div class="blog-date">{{ post.date | date: "%Y-%m-%d" }}</div>
+        <h3>{{ post.title }}</h3>
+        {% if post.excerpt %}
+        <p>{{ post.excerpt | strip_html | truncate: 120 }}</p>
+        {% endif %}
+        {% if post.tags %}
+        <div class="blog-tags">
+          {% for tag in post.tags %}
+          <span>{{ tag }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </a>
+      {% else %}
+      <p style="text-align:center; color: var(--text-muted); padding: 40px 0;">
+        <i class="fas fa-pen-fancy" style="font-size: 2rem; display: block; margin-bottom: 12px;"></i>
+        暂无文章，请到 <a href="{{ '/blog' | relative_url }}" style="color: var(--accent);">博客页面</a> 浏览。
+      </p>
+      {% endfor %}
+    </div>
+    <div class="view-all">
+      <a href="{{ '/blog' | relative_url }}" class="btn btn-outline">
+        <i class="fas fa-arrow-right"></i> 浏览所有文章
+      </a>
+    </div>
+  </div>
+</section>

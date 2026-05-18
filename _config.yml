@@ -1,0 +1,28 @@
+title: "LBK | AI视觉工程师"
+author: "LBK (popcornGit)"
+email: "493769708@qq.com"
+description: >-
+  AI视觉算法与NPU模型转换。专注嵌入式AI部署、C++/Python开发。
+baseurl: ""
+url: "https://popcorngit.github.io"
+github_username: popcornGit
+
+# Build settings
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Markdown settings
+markdown: kramdown
+highlighter: rouge
+
+# Navigation
+header_pages:
+  - index.md
+  - about.md
+  - projects.md
+  - blog.md
+
+# Show excerpts on homepage
+show_excerpts: true
