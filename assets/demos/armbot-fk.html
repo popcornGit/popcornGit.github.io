@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7-DoF 机械臂正运动学 Demo</title>
+<!-- Three.js r128 — local copies for offline / GitHub Pages use -->
+<script src="lib/three.min.js"></script>
+<script src="lib/OrbitControls.js"></script>
+<script src="lib/CSS2DRenderer.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0f0f1a; color: #d0d0e0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; overflow: hidden; height: 100vh; }
+#container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 0; }
+
+#info-panel {
+  position: fixed; top: 16px; right: 16px; z-index: 10;
+  background: rgba(15,15,30,0.85); backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+  padding: 16px 18px; min-width: 200px;
+  font-size: 13px; line-height: 1.7;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+#info-panel h2 { font-size: 14px; color: #6ac; margin-bottom: 4px; }
+#info-panel .row { display: flex; justify-content: space-between; }
+#info-panel .label { color: #8899aa; }
+#info-panel .value { color: #c0d0e0; font-family: 'Consolas', monospace; font-size: 12px; }
+#info-panel .sep { height: 1px; background: rgba(255,255,255,0.06); margin: 6px 0; }
+#info-panel .title-line { font-size: 15px; font-weight: 600; color: #8cf; margin-bottom: 2px; }
+
+#slider-panel {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+  background: rgba(15,15,30,0.88); backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 10px 16px 14px;
+  display: flex; flex-wrap: wrap; gap: 6px 8px; justify-content: center;
+  max-height: 170px; overflow-y: auto;
+}
+.slider-group {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 100px; flex: 0 1 115px;
+}
+.slider-group label {
+  font-size: 10px; color: #8899aa; margin-bottom: 1px;
+  white-space: nowrap; letter-spacing: 0.3px;
+}
+.slider-group .val-display {
+  font-size: 11px; color: #8cf; font-family: 'Consolas', monospace;
+  margin-bottom: 1px;
+}
+.slider-group input[type=range] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, #1a2a3a, #3a6a8a);
+  outline: none; cursor: pointer;
+}
+.slider-group input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: radial-gradient(circle, #4a9adf, #2a6aaf);
+  border: 2px solid rgba(255,255,255,0.2);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(70,150,220,0.3);
+}
+.slider-group input[type=range]::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: radial-gradient(circle, #4a9adf, #2a6aaf);
+  border: 2px solid rgba(255,255,255,0.2); cursor: pointer;
+}
+
+#preset-bar {
+  position: fixed; bottom: 180px; left: 50%; transform: translateX(-50%); z-index: 10;
+  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+}
+.preset-btn {
+  padding: 7px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(30,50,80,0.6); color: #b0c8e0;
+  font-size: 13px; cursor: pointer; transition: all 0.2s;
+  backdrop-filter: blur(4px);
+}
+.preset-btn:hover { background: rgba(50,90,150,0.7); border-color: rgba(100,180,255,0.3); color: #fff; }
+
+.joint-list { font-size: 11px; line-height: 1.6; }
+.joint-list .jrow { display: flex; justify-content: space-between; }
+.joint-list .jname { color: #8899aa; }
+.joint-list .jval { color: #8cf; font-family: 'Consolas', monospace; }
+
+@media (max-width: 700px) {
+  #info-panel { top: 10px; right: 10px; padding: 10px 12px; min-width: 140px; font-size: 11px; }
+  #slider-panel { padding: 6px 8px 10px; gap: 4px; }
+  .slider-group { min-width: 75px; flex: 0 1 80px; }
+  .preset-btn { padding: 5px 12px; font-size: 11px; }
+  #preset-bar { bottom: 158px; }
+}
+</style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<div id="preset-bar">
+  <button class="preset-btn" data-pose="home">🏠 初始位</button>
+  <button class="preset-btn" data-pose="reach">↗ 前伸</button>
+  <button class="preset-btn" data-pose="tuck">📦 收缩</button>
+  <button class="preset-btn" data-pose="random">🎲 随机</button>
+</div>
+
+<div id="slider-panel"></div>
+
+<div id="info-panel">
+  <div class="title-line">🦾 7-DoF 机械臂</div>
+  <div class="sep"></div>
+  <div class="row"><span class="label">位置 X</span><span class="value" id="pos-x">0.000</span></div>
+  <div class="row"><span class="label">位置 Y</span><span class="value" id="pos-y">0.000</span></div>
+  <div class="row"><span class="label">位置 Z</span><span class="value" id="pos-z">0.000</span></div>
+  <div class="sep"></div>
+  <div class="row"><span class="label">Roll</span><span class="value" id="ori-r">0.0°</span></div>
+  <div class="row"><span class="label">Pitch</span><span class="value" id="ori-p">0.0°</span></div>
+  <div class="row"><span class="label">Yaw</span><span class="value" id="ori-y">0.0°</span></div>
+  <div class="sep"></div>
+  <h2>关节角度</h2>
+  <div class="joint-list" id="joint-list"></div>
+</div>
+
+<script>
+// ============================================================
+// DH PARAMETERS
+// ============================================================
+const DH_PARAMS = [
+  { name: '腰关节偏航', alpha: 0,          a: 0,     d: 0.25, limit: [-Math.PI, Math.PI] },
+  { name: '肩关节俯仰', alpha: -Math.PI/2,  a: 0.05,  d: 0,    limit: [-Math.PI/2, Math.PI/2] },
+  { name: '肩关节滚转', alpha: Math.PI/2,   a: 0,     d: 0.35, limit: [-Math.PI/2, Math.PI/2] },
+  { name: '肘关节俯仰', alpha: -Math.PI/2,  a: 0.05,  d: 0,    limit: [-2.27, 2.27] },
+  { name: '腕关节偏航', alpha: Math.PI/2,   a: 0,     d: 0.30, limit: [-Math.PI, Math.PI] },
+  { name: '腕关节俯仰', alpha: -Math.PI/2,  a: 0.03,  d: 0,    limit: [-Math.PI/2, Math.PI/2] },
+  { name: '腕关节滚转', alpha: Math.PI/2,   a: 0,     d: 0.12, limit: [-Math.PI/2, Math.PI/2] },
+];
+const TCP_OFFSET = [0, 0, 0.08];
+const N = DH_PARAMS.length;
+
+// Modified DH transform matrix
+function dhTransform(alpha, a, d, theta) {
+  const ct = Math.cos(theta), st = Math.sin(theta);
+  const ca = Math.cos(alpha), sa = Math.sin(alpha);
+  return [
+    [ct, -st, 0, a],
+    [st*ca, ct*ca, -sa, -d*sa],
+    [st*sa, ct*sa, ca, d*ca],
+    [0, 0, 0, 1]
+  ];
+}
+
+function matMul(A, B) {
+  const R = Array(4).fill().map(() => Array(4).fill(0));
+  for (let i = 0; i < 4; i++)
+    for (let k = 0; k < 4; k++)
+      for (let j = 0; j < 4; j++)
+        R[i][j] += A[i][k] * B[k][j];
+  return R;
+}
+
+// 4x4 matrix * [x,y,z,1]
+function matVecMul(M, v) {
+  const r = [0,0,0,0];
+  for (let i = 0; i < 4; i++)
+    for (let j = 0; j < 4; j++)
+      r[i] += M[i][j] * v[j];
+  return r;
+}
+
+// Extract Euler angles from 4x4 matrix (ZYX)
+function matToEuler(M) {
+  const sy = Math.sqrt(M[0][0]*M[0][0] + M[1][0]*M[1][0]);
+  if (sy > 1e-6) {
+    return { roll: Math.atan2(M[2][1], M[2][2]), pitch: Math.atan2(-M[2][0], sy), yaw: Math.atan2(M[1][0], M[0][0]) };
+  }
+  return { roll: Math.atan2(-M[1][2], M[1][1]), pitch: Math.atan2(-M[2][0], sy), yaw: 0 };
+}
+
+function eye4() {
+  return [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+}
+
+// Identity 3x3
+function mat3Identity() {
+  return [1,0,0, 0,1,0, 0,0,1];
+}
+
+// ============================================================
+// THREE.JS SETUP
+// ============================================================
+const container = document.getElementById('container');
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.01, 50);
+camera.position.set(2.0, 1.5, 3.0);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x0f0f1a, 1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2;
+container.appendChild(renderer.domElement);
+
+const labelRenderer = new THREE.CSS2DRenderer();
+labelRenderer.setSize(container.clientWidth, container.clientHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+container.appendChild(labelRenderer.domElement);
+
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.5, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 0.5;
+controls.maxDistance = 10;
+controls.update();
+
+// ============================================================
+// LIGHTS
+// ============================================================
+scene.add(new THREE.AmbientLight(0x334466, 0.6));
+const dl = new THREE.DirectionalLight(0xffeedd, 1.8);
+dl.position.set(5, 10, 5);
+dl.castShadow = true;
+scene.add(dl);
+const fl = new THREE.DirectionalLight(0x4488ff, 0.5);
+fl.position.set(-3, 2, -4);
+scene.add(fl);
+const rl = new THREE.DirectionalLight(0x88ccff, 0.3);
+rl.position.set(0, -2, 5);
+scene.add(rl);
+
+// ============================================================
+// GROUND GRID
+// ============================================================
+const gridMat = new THREE.LineBasicMaterial({ color: 0x2a3a5a, transparent: true, opacity: 0.4 });
+const gs = 10, gd = 20, step = gs/gd;
+const verts = [];
+for (let i = -gd/2; i <= gd/2; i++) {
+  const p = i * step;
+  verts.push(p, 0, -gs/2, p, 0, gs/2);
+  verts.push(-gs/2, 0, p, gs/2, 0, p);
+}
+const ggeo = new THREE.BufferGeometry();
+ggeo.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+scene.add(new THREE.LineSegments(ggeo, gridMat));
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(10, 10),
+  new THREE.ShadowMaterial({ opacity: 0.25 })
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -0.001;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ============================================================
+// ROBOT ARM
+// ============================================================
+const armGroup = new THREE.Group();
+scene.add(armGroup);
+
+// Joint sphere colors: gradient from deep blue to cyan
+const jointColors = [0x1a3a6a, 0x1a4a7a, 0x1a5a8a, 0x2a6a9a, 0x2a7aaa, 0x3a8aba, 0x4a9aca];
+
+function linkColor(i) {
+  const t = i / (N - 1);
+  return new THREE.Color(`rgb(${Math.floor(20+50*t)},${Math.floor(60+80*t)},${Math.floor(110+90*t)})`);
+}
+
+// Build coordinate axis helper at a position/orientation
+function makeAxis(size) {
+  const g = new THREE.Group();
+  const s = size || 0.10;
+  const m = 0.004;
+  // X - red
+  const ax = new THREE.Mesh(new THREE.CylinderGeometry(m, m, s, 6), new THREE.MeshBasicMaterial({color:0xff4444}));
+  ax.rotation.z = -Math.PI/2; ax.position.x = s/2; g.add(ax);
+  const tx = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 6), new THREE.MeshBasicMaterial({color:0xff4444}));
+  tx.rotation.z = -Math.PI/2; tx.position.x = s; g.add(tx);
+  // Y - green
+  const ay = new THREE.Mesh(new THREE.CylinderGeometry(m, m, s, 6), new THREE.MeshBasicMaterial({color:0x44ff44}));
+  ay.position.y = s/2; g.add(ay);
+  const ty = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 6), new THREE.MeshBasicMaterial({color:0x44ff44}));
+  ty.position.y = s; g.add(ty);
+  // Z - blue
+  const az = new THREE.Mesh(new THREE.CylinderGeometry(m, m, s, 6), new THREE.MeshBasicMaterial({color:0x4488ff}));
+  az.rotation.x = Math.PI/2; az.position.z = s/2; g.add(az);
+  const tz = new THREE.Mesh(new THREE.ConeGeometry(0.012, 0.025, 6), new THREE.MeshBasicMaterial({color:0x4488ff}));
+  tz.rotation.x = Math.PI/2; tz.position.z = s; g.add(tz);
+  return g;
+}
+
+// Storage
+const jointSpheres = [];
+const linkMeshes = [];
+const axisArrows = [];
+const axisLabels = [];
+
+// Build initial robot
+for (let i = 0; i < N; i++) {
+  // Joint sphere
+  const smat = new THREE.MeshPhysicalMaterial({
+    color: jointColors[i], metalness: 0.3, roughness: 0.2,
+    clearcoat: 0.4, clearcoatRoughness: 0.3,
+    transparent: true, opacity: 0.85
+  });
+  const sphere = new THREE.Mesh(new THREE.SphereGeometry(0.045, 24, 24), smat);
+  sphere.castShadow = true;
+  armGroup.add(sphere);
+  jointSpheres.push(sphere);
+
+  // Link cylinder
+  const linkLen = DH_PARAMS[i].d > 0.01 ? DH_PARAMS[i].d : 0.12;
+  const lmat = new THREE.MeshPhysicalMaterial({
+    color: linkColor(i), metalness: 0.2, roughness: 0.15,
+    transparent: true, opacity: 0.7, clearcoat: 0.2
+  });
+  const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, linkLen, 12), lmat);
+  cyl.castShadow = true;
+  armGroup.add(cyl);
+  linkMeshes.push(cyl);
+
+  // Axis arrow
+  const ax = makeAxis(0.10);
+  armGroup.add(ax);
+  axisArrows.push(ax);
+
+  // Label (CSS2D)
+  const d = document.createElement('div');
+  d.textContent = 'J' + (i+1);
+  d.style.color = '#4a8aba';
+  d.style.fontSize = '10px';
+  d.style.fontFamily = 'Consolas, monospace';
+  d.style.textShadow = '0 0 6px rgba(0,0,0,0.8)';
+  d.style.background = 'rgba(15,15,30,0.5)';
+  d.style.padding = '1px 5px';
+  d.style.borderRadius = '8px';
+  d.style.border = '1px solid rgba(70,130,200,0.15)';
+  const label = new THREE.CSS2DObject(d);
+  armGroup.add(label);
+  axisLabels.push(label);
+}
+
+// TCP marker
+const tcpMat = new THREE.MeshPhysicalMaterial({
+  color: 0xff2244, metalness: 0.1, roughness: 0.2,
+  emissive: 0xff2244, emissiveIntensity: 0.3,
+  transparent: true, opacity: 0.9
+});
+const tcpMarker = new THREE.Mesh(new THREE.SphereGeometry(0.03, 20, 20), tcpMat);
+tcpMarker.castShadow = true;
+armGroup.add(tcpMarker);
+const tcpGlow = new THREE.Mesh(
+  new THREE.SphereGeometry(0.06, 16, 16),
+  new THREE.MeshBasicMaterial({ color: 0xff2244, transparent: true, opacity: 0.12 })
+);
+armGroup.add(tcpGlow);
+
+// ============================================================
+// FORWARD KINEMATICS
+// ============================================================
+let jointAngles = new Array(N).fill(0);
+
+function computeFK(angles) {
+  let T = eye4();
+  const transforms = [];
+  for (let i = 0; i < N; i++) {
+    const p = DH_PARAMS[i];
+    T = matMul(T, dhTransform(p.alpha, p.a, p.d, angles[i]));
+    transforms.push(T);
+  }
+  const tcpWorld = matVecMul(T, [TCP_OFFSET[0], TCP_OFFSET[1], TCP_OFFSET[2], 1]);
+  return {
+    transforms: transforms,
+    T_tcp: T,
+    position: { x: tcpWorld[0], y: tcpWorld[1], z: tcpWorld[2] },
+    euler: matToEuler(T)
+  };
+}
+
+// ============================================================
+// UPDATE VISUAL
+// ============================================================
+function updateRobot(angles) {
+  const fk = computeFK(angles);
+
+  for (let i = 0; i < N; i++) {
+    const T = fk.transforms[i];
+    const pos = new THREE.Vector3(T[0][3], T[1][3], T[2][3]);
+
+    // Joint sphere
+    jointSpheres[i].position.copy(pos);
+
+    // Axis arrow with rotation
+    const rm = new THREE.Matrix4();
+    rm.set(T[0][0], T[0][1], T[0][2], 0,
+           T[1][0], T[1][1], T[1][2], 0,
+           T[2][0], T[2][1], T[2][2], 0,
+           0, 0, 0, 1);
+    axisArrows[i].position.copy(pos);
+    axisArrows[i].quaternion.setFromRotationMatrix(rm);
+
+    // Label
+    axisLabels[i].position.copy(pos);
+    axisLabels[i].position.y += 0.08;
+
+    // Link from this joint to next
+    if (i < linkMeshes.length) {
+      const nextT = i < N - 1 ? fk.transforms[i+1] : fk.T_tcp;
+      const nPos = new THREE.Vector3(nextT[0][3], nextT[1][3], nextT[2][3]);
+      const mid = new THREE.Vector3().addVectors(pos, nPos).multiplyScalar(0.5);
+      const dir = new THREE.Vector3().subVectors(nPos, pos);
+      const len = dir.length();
+      linkMeshes[i].position.copy(mid);
+      if (len > 0.001) {
+        linkMeshes[i].quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.clone().normalize());
+      }
+      linkMeshes[i].scale.y = len / (DH_PARAMS[i].d > 0.01 ? DH_PARAMS[i].d : 0.12);
+    }
+  }
+
+  // TCP
+  const tcpPos = new THREE.Vector3(fk.position.x, fk.position.y, fk.position.z);
+  tcpMarker.position.copy(tcpPos);
+  tcpGlow.position.copy(tcpPos);
+
+  // Info panel
+  document.getElementById('pos-x').textContent = fk.position.x.toFixed(3);
+  document.getElementById('pos-y').textContent = fk.position.y.toFixed(3);
+  document.getElementById('pos-z').textContent = fk.position.z.toFixed(3);
+  document.getElementById('ori-r').textContent = (fk.euler.roll * 180 / Math.PI).toFixed(1) + '°';
+  document.getElementById('ori-p').textContent = (fk.euler.pitch * 180 / Math.PI).toFixed(1) + '°';
+  document.getElementById('ori-y').textContent = (fk.euler.yaw * 180 / Math.PI).toFixed(1) + '°';
+
+  // Joint list
+  const jlist = document.getElementById('joint-list');
+  const sn = ['腰偏航','肩俯仰','肩滚转','肘俯仰','腕偏航','腕俯仰','腕滚转'];
+  jlist.innerHTML = '';
+  for (let i = 0; i < N; i++) {
+    const r = document.createElement('div');
+    r.className = 'jrow';
+    r.innerHTML = '<span class="jname">J' + (i+1) + ' ' + sn[i] + '</span><span class="jval">' + (angles[i]*180/Math.PI).toFixed(1) + '°</span>';
+    jlist.appendChild(r);
+  }
+
+  return fk;
+}
+
+// ============================================================
+// UI SETUP — Sliders
+// ============================================================
+const sliderPanel = document.getElementById('slider-panel');
+const sliderShort = ['腰偏航','肩俯仰','肩滚转','肘俯仰','腕偏航','腕俯仰','腕滚转'];
+
+DH_PARAMS.forEach((p, i) => {
+  const group = document.createElement('div');
+  group.className = 'slider-group';
+
+  const label = document.createElement('label');
+  label.textContent = 'J' + (i+1) + ' ' + sliderShort[i];
+  group.appendChild(label);
+
+  const valDisplay = document.createElement('div');
+  valDisplay.className = 'val-display';
+  valDisplay.textContent = '0.0°';
+  group.appendChild(valDisplay);
+
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = p.limit[0] * 180 / Math.PI;
+  input.max = p.limit[1] * 180 / Math.PI;
+  input.step = 0.1;
+  input.value = 0;
+  input.dataset.index = i;
+
+  input.addEventListener('input', function() {
+    const deg = parseFloat(this.value);
+    jointAngles[i] = deg * Math.PI / 180;
+    valDisplay.textContent = deg.toFixed(1) + '°';
+    updateRobot(jointAngles);
+  });
+
+  group.appendChild(input);
+  sliderPanel.appendChild(group);
+});
+
+// ============================================================
+// PRESET POSES
+// ============================================================
+function setAngles(angles) {
+  angles.forEach((a, i) => {
+    jointAngles[i] = a;
+    const slider = sliderPanel.querySelector('input[data-index="' + i + '"]');
+    if (slider) slider.value = (a * 180 / Math.PI).toFixed(1);
+    const vd = slider ? slider.parentElement.querySelector('.val-display') : null;
+    if (vd) vd.textContent = (a * 180 / Math.PI).toFixed(1) + '°';
+  });
+  updateRobot(jointAngles);
+}
+
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    switch(this.dataset.pose) {
+      case 'home': setAngles([0,0,0,0,0,0,0]); break;
+      case 'reach': setAngles([0, 0.5, 0, -0.8, 0, 0.3, 0]); break;
+      case 'tuck': setAngles([0, -1.2, 0, 1.5, 0, -0.5, 0]); break;
+      case 'random': {
+        setAngles(DH_PARAMS.map(p => p.limit[0] + Math.random() * (p.limit[1] - p.limit[0])));
+        break;
+      }
+    }
+  });
+});
+
+// ============================================================
+// RESIZE
+// ============================================================
+function onResize() {
+  const w = container.clientWidth, h = container.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  labelRenderer.setSize(w, h);
+}
+window.addEventListener('resize', onResize);
+
+// ============================================================
+// ANIMATION LOOP
+// ============================================================
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+
+// Initial render
+updateRobot(jointAngles);
+animate();
+</script>
+</body>
+</html>
