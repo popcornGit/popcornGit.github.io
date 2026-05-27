@@ -55,6 +55,18 @@ title: 项目
 </div>
 
 <div class="project-card" style="cursor: default;">
+  <div class="project-icon"><i class="fas fa-robot"></i></div>
+  <h3>armbot · 7-DoF 机械臂运动学</h3>
+  <p>从零搭建的 7 自由度串联机械臂运动控制算法框架。基于 Modified DH 参数法实现正/逆运动学，含几何雅可比矩阵、零空间冗余度优化，<a href="https://popcorngit.github.io/2026/05/27/armbot-forward-kinematics.html" target="_blank" rel="noopener">博客讲解</a> + <a href="https://popcorngit.github.io/assets/demos/armbot-fk.html" target="_blank" rel="noopener">交互式 3D Demo</a>。</p>
+  <div class="project-tech">
+    <span>Python</span>
+    <span>DH 参数</span>
+    <span>机械臂</span>
+    <span>Three.js</span>
+  </div>
+</div>
+
+<div class="project-card" style="cursor: default;">
   <div class="project-icon"><i class="fas fa-comments"></i></div>
   <h3>LBK-Intelligent-dialogue</h3>
   <p>基于深度学习的智能对话交互系统，融合自然语言理解与多轮对话管理。</p>
